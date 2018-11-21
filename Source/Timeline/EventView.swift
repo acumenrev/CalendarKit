@@ -10,10 +10,9 @@ protocol EventViewDelegate: class {
 public protocol EventDescriptor: class {
   var datePeriod: TimePeriod {get}
   var text: String {get}
-  var attributedText: NSAttributedString? {get}
-  var font : UIFont {get}
   var color: UIColor {get}
   var textColor: UIColor {get}
+    var textFont: UIFont {get}
   var backgroundColor: UIColor {get}
   var frame: CGRect {get set}
 }
@@ -23,7 +22,7 @@ open class EventView: UIView {
   weak var delegate: EventViewDelegate?
   public var descriptor: EventDescriptor?
 
-  public var color = UIColor.lightGray
+  public var color = UIColor()
 
   var contentHeight: CGFloat {
     return textView.height
@@ -31,9 +30,9 @@ open class EventView: UIView {
 
   lazy var textView: UITextView = {
     let view = UITextView()
+    view.font = UIFont.boldSystemFont(ofSize: 12)
     view.isUserInteractionEnabled = false
     view.backgroundColor = .clear
-    view.isScrollEnabled = false
     return view
   }()
 
@@ -59,14 +58,10 @@ open class EventView: UIView {
   }
 
   func updateWithDescriptor(event: EventDescriptor) {
-    if let attributedText = event.attributedText {
-      textView.attributedText = attributedText
-    } else {
-      textView.text = event.text
-      textView.textColor = event.textColor
-      textView.font = event.font
-    }
     descriptor = event
+    textView.text = event.text
+    textView.textColor = event.textColor
+    textView.font = event.textFont
     backgroundColor = event.backgroundColor
     color = event.color
     setNeedsDisplay()

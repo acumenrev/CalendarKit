@@ -1,6 +1,7 @@
 import UIKit
 
 protocol PagingScrollViewDelegate: class {
+  func updateViewAtIndex(_ index: Int)
   func scrollviewDidScrollToViewAtIndex(_ index: Int)
 }
 
@@ -12,16 +13,16 @@ class PagingScrollView<T: UIView>: UIScrollView, UIScrollViewDelegate where T: R
 
   var reusableViews = [T]()
   weak var viewDelegate: PagingScrollViewDelegate?
-
+    
+    var isScrollByManual = false
+    var scrollEvent: ((_ isNext:Bool) ->())?
+    var numBackWeek = 0
   var previousPage: CGFloat = 1
   var currentScrollViewPage: CGFloat {
     get {
       let width = bounds.width
       let centerOffsetX = contentOffset.x + width / 2
-
-      let result = centerOffsetX / width - 0.5
-      // Return central page if impossible to calculate (View has no size yet)
-      return result.isNaN ? 1 : result
+      return centerOffsetX / width - 0.5
     }
   }
 
@@ -74,10 +75,12 @@ class PagingScrollView<T: UIView>: UIScrollView, UIScrollViewDelegate where T: R
       reusableViews.shift(1)
       accumulator += 1
       reusableViews.last!.prepareForReuse()
+      viewDelegate?.updateViewAtIndex(reusableViews.endIndex - 1)
     } else if distanceFromCenter < 0 {
       reusableViews.shift(-1)
       accumulator -= 1
       reusableViews.first!.prepareForReuse()
+      viewDelegate?.updateViewAtIndex(0)
     }
     contentOffset = CGPoint(x: centerOffsetX, y: contentOffset.y)
   }
@@ -90,19 +93,63 @@ class PagingScrollView<T: UIView>: UIScrollView, UIScrollViewDelegate where T: R
   }
 
   func scrollForward() {
+    isScrollByManual = true
     setContentOffset(CGPoint(x: contentOffset.x + bounds.width, y: 0), animated: true)
+    
   }
 
   func scrollBackward() {
+    isScrollByManual = true
     setContentOffset(CGPoint(x: contentOffset.x - bounds.width, y: 0), animated: true)
   }
 
   func checkForPageChange() {
-    recenter()
+    
     if currentIndex != previousPage {
+        
+        if(numBackWeek == 0){
+            if(currentIndex > previousPage){
+                setContentOffset(CGPoint(x: contentOffset.x - bounds.width, y: 0), animated: true)
+                return
+            }
+            
+        }
+        
+        if(numBackWeek == 2){
+            if(currentIndex < previousPage){
+                setContentOffset(CGPoint(x: contentOffset.x + bounds.width, y: 0), animated: true)
+                
+                return
+            }
+            
+
+        }
+
+        
+        if(!isScrollByManual){
+            if(currentIndex < previousPage){
+                scrollEvent?(false)
+            }else{
+                scrollEvent?(true)
+            }
+        }
+        isScrollByManual = false
+        
+        
+        if(currentIndex < previousPage){
+            numBackWeek += 1
+        }else{
+            numBackWeek -= 1
+        }
+        
+        
+        
       viewDelegate?.scrollviewDidScrollToViewAtIndex(Int(currentScrollViewPage))
       previousPage = currentIndex
+        
+        
     }
+    recenter()
   }
 
   func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {

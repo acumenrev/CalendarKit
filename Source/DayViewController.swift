@@ -1,7 +1,7 @@
 import UIKit
 import DateToolsSwift
 
-open class DayViewController: UIViewController, EventDataSource, DayViewDelegate {
+open class DayViewController: UIViewController, DayViewDataSource, DayViewDelegate {
 
   public lazy var dayView: DayView = DayView()
 
@@ -14,11 +14,6 @@ open class DayViewController: UIViewController, EventDataSource, DayViewDelegate
     dayView.dataSource = self
     dayView.delegate = self
     dayView.reloadData()
-  }
-
-  open override func viewWillAppear(_ animated: Bool) {
-    super.viewWillAppear(animated)
-    dayView.scrollToFirstEventIfNeeded()
   }
 
   open override func viewDidLayoutSubviews() {
@@ -48,7 +43,7 @@ open class DayViewController: UIViewController, EventDataSource, DayViewDelegate
   }
 
   open func dayViewDidLongPressTimelineAtHour(_ hour: Int) {
-
+    print("hour = \(hour)")
   }
 
   open func dayView(dayView: DayView, willMoveTo date: Date) {
